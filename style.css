@@ -35,12 +35,16 @@ body {
 }
 
 .counter {
-  height: 50px;
+  height: 70px;
   text-align: center;
-  line-height: 50px;
+  padding-top: 8px;
   font-size: 14px;
   color: #444;
   border-top: 1px solid #eee;
+}
+
+.counter div {
+  line-height: 1.4;
 }
 
 .modal {
@@ -90,3 +94,4 @@ button {
   color: white;
   font-weight: 700;
 }
+
