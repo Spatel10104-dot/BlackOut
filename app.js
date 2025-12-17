@@ -1,4 +1,5 @@
 const totalEl = document.getElementById("total");
+const todayEl = document.getElementById("today");
 const modal = document.getElementById("modal");
 const closeBtn = document.getElementById("close");
 
@@ -25,9 +26,47 @@ function resetIfNewDay() {
   }
 }
 
+// -------------------- UNDO LOGIC --------------------
+let pressTimer = null;
+let longPressTriggered = false;
+
+function startPress() {
+  longPressTriggered = false;
+  pressTimer = setTimeout(() => {
+    undoLastDrink();
+    longPressTriggered = true;
+  }, 2000); // 2 seconds
+}
+
+function endPress() {
+  clearTimeout(pressTimer);
+}
+
+function undoLastDrink() {
+  if (state.tripTotal <= 0 || state.dayDrinks <= 0) return;
+
+  state.tripTotal--;
+  state.dayDrinks--;
+
+  updateUI();
+  save();
+
+  if (navigator.vibrate) navigator.vibrate(20);
+}
+
 // -------------------- LOG DRINK --------------------
 document.querySelectorAll(".drink").forEach(el => {
+  el.addEventListener("touchstart", startPress);
+  el.addEventListener("touchend", endPress);
+  el.addEventListener("touchcancel", endPress);
+
   el.addEventListener("click", () => {
+    // Block add if long press occurred
+    if (longPressTriggered) {
+      longPressTriggered = false;
+      return;
+    }
+
     resetIfNewDay();
 
     state.tripTotal++;
@@ -40,41 +79,19 @@ document.querySelectorAll(".drink").forEach(el => {
       modal.classList.remove("hidden");
     }
 
-    totalEl.textContent = state.tripTotal;
+    updateUI();
     save();
   });
 });
 
-// -------------------- UNDO (2s LONG PRESS) --------------------
-let pressTimer = null;
-
-document.body.addEventListener("touchstart", () => {
-  pressTimer = setTimeout(undoLastDrink, 2000); // 2 seconds
-});
-
-document.body.addEventListener("touchend", () => {
-  clearTimeout(pressTimer);
-});
-
-document.body.addEventListener("touchcancel", () => {
-  clearTimeout(pressTimer);
-});
-
-function undoLastDrink() {
-  if (state.tripTotal <= 0 || state.dayDrinks <= 0) return;
-
-  state.tripTotal--;
-  state.dayDrinks--;
-
+// -------------------- UI --------------------
+function updateUI() {
   totalEl.textContent = state.tripTotal;
-  save();
-
-  // subtle haptic feedback if supported
-  if (navigator.vibrate) navigator.vibrate(20);
+  todayEl.textContent = state.dayDrinks;
 }
 
 // -------------------- MODAL --------------------
 closeBtn.onclick = () => modal.classList.add("hidden");
 
 // Initial render
-totalEl.textContent = state.tripTotal;
+updateUI();
