@@ -25,19 +25,17 @@ function resetIfNewDay() {
   }
 }
 
+// -------------------- LOG DRINK --------------------
 document.querySelectorAll(".drink").forEach(el => {
   el.addEventListener("click", () => {
     resetIfNewDay();
 
-    // Log drink
     state.tripTotal++;
     state.dayDrinks++;
 
-    // Calculate probability
     const tiers = Math.floor(state.dayDrinks / TIER_DRINKS);
     const chance = BASE_CHANCE + tiers * TIER_ADD;
 
-    // Roll
     if (Math.random() < chance) {
       modal.classList.remove("hidden");
     }
@@ -47,6 +45,35 @@ document.querySelectorAll(".drink").forEach(el => {
   });
 });
 
+// -------------------- UNDO (2s LONG PRESS) --------------------
+let pressTimer = null;
+
+document.body.addEventListener("touchstart", () => {
+  pressTimer = setTimeout(undoLastDrink, 2000); // 2 seconds
+});
+
+document.body.addEventListener("touchend", () => {
+  clearTimeout(pressTimer);
+});
+
+document.body.addEventListener("touchcancel", () => {
+  clearTimeout(pressTimer);
+});
+
+function undoLastDrink() {
+  if (state.tripTotal <= 0 || state.dayDrinks <= 0) return;
+
+  state.tripTotal--;
+  state.dayDrinks--;
+
+  totalEl.textContent = state.tripTotal;
+  save();
+
+  // subtle haptic feedback if supported
+  if (navigator.vibrate) navigator.vibrate(20);
+}
+
+// -------------------- MODAL --------------------
 closeBtn.onclick = () => modal.classList.add("hidden");
 
 // Initial render
