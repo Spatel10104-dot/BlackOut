@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BlackOut</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="assets/icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="container">
+    <div class="drink" data-type="beer">
+      <img src="assets/beer.png" alt="Beer" />
+    </div>
+
+    <div class="drink" data-type="cocktail">
+      <img src="assets/cocktail.png" alt="Cocktail" />
+    </div>
+
+    <div class="drink" data-type="shot">
+      <img src="assets/shot.png" alt="Shot" />
+    </div>
+  </div>
+
+  <div class="counter">
+    Total drinks this trip: <span id="total">0</span>
+  </div>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="emoji">🌴🥃</div>
+      <div class="title">BLACKOUT</div>
+      <div class="text">Other person takes a shot</div>
+      <button id="close">OK</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
