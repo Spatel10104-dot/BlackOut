@@ -49,18 +49,6 @@ body {
   height: auto;
 }
 
-.counter {
-  height: 50px;
-  text-align: center;
-  padding-top: 8px;
-  font-size: 14px;
-  color: #444;
-  border-top: 1px solid #eee;
-}
-
-.counter div {
-  line-height: 1.4;
-}
 
 /* -------------------- STATS -------------------- */
 .stats-page {
@@ -524,3 +512,48 @@ button {
 .send-it-btn.ready { opacity: 1; }
 
 .end-night-btn.hidden { display: none; }
+
+/* -------------------- CAMERA BUTTON -------------------- */
+.counter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  height: 50px;
+  border-top: 1px solid #eee;
+  padding: 0 14px;
+}
+
+.counter-text {
+  text-align: center;
+  font-size: 14px;
+  color: #444;
+  line-height: 1.4;
+}
+
+.camera-btn {
+  position: absolute;
+  right: 14px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px;
+  margin: 0;
+  width: auto;
+  border-radius: 8px;
+}
+
+/* -------------------- RECAP PHOTOS -------------------- */
+.photos-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.recap-photo {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 10px;
+}
