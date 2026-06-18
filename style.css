@@ -522,3 +522,5 @@ button {
 
 .send-it-btn.hidden { display: none; }
 .send-it-btn.ready { opacity: 1; }
+
+.end-night-btn.hidden { display: none; }
