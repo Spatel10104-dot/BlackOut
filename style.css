@@ -473,3 +473,52 @@ button {
   font-weight: 700;
   cursor: pointer;
 }
+
+/* -------------------- SHOT NAME CARDS -------------------- */
+.name-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0;
+  width: 100%;
+}
+
+.name-cards-container.hidden { display: none; }
+
+.name-card {
+  width: 100%;
+  padding: 12px 14px;
+  background: #f7f7f7;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: #000;
+  cursor: pointer;
+  text-align: center;
+  font-family: -apple-system, sans-serif;
+  transition: background 0.1s;
+}
+
+.name-card.selected {
+  background: #000;
+  color: #fff;
+}
+
+.send-it-btn {
+  margin-top: 8px;
+  padding: 11px;
+  width: 100%;
+  border-radius: 12px;
+  border: none;
+  background: #000;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.3;
+  font-family: -apple-system, sans-serif;
+}
+
+.send-it-btn.hidden { display: none; }
+.send-it-btn.ready { opacity: 1; }
