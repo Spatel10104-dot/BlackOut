@@ -52,7 +52,9 @@
       </div>
       <div class="recap-section">
         <div class="recap-section-title">Photos</div>
-        <div class="photos-placeholder">📷 Photos coming soon</div>
+        <div class="photos-grid" id="recap-photos-grid">
+          <div class="photos-placeholder">📷 No photos yet</div>
+        </div>
       </div>
     </div>
     <div class="recap-dot-menu hidden" id="recap-dot-menu">
@@ -69,8 +71,12 @@
       <div class="drink" data-type="shot"><img src="assets/shot.png" alt="Shot" /></div>
     </div>
     <div class="counter">
-      <div>Drinks today: <span id="today">0</span></div>
-      <div>Total drinks this trip: <span id="total">0</span></div>
+      <div class="counter-text">
+        <div>Drinks today: <span id="today">0</span></div>
+        <div>Total drinks this trip: <span id="total">0</span></div>
+      </div>
+      <button class="camera-btn" id="camera-btn">📷</button>
+      <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" />
     </div>
   </div>
 
