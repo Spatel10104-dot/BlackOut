@@ -336,3 +336,8 @@ button {
 .sheet-btn.primary { background: #000; color: #fff; }
 .sheet-btn.secondary { background: #f2f2f2; color: #000; }
 .sheet-btn.cancel { background: none; color: #999; margin-bottom: 0; }
+
+/* ensure sheet stays hidden */
+.sheet-overlay.hidden {
+  display: none !important;
+}
