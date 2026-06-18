@@ -28,15 +28,9 @@
   <!-- BLACKOUT SCREEN -->
   <div id="screen-blackout" class="screen active">
     <div class="container">
-      <div class="drink" data-type="beer">
-        <img src="assets/beer.png" alt="Beer" />
-      </div>
-      <div class="drink" data-type="cocktail">
-        <img src="assets/cocktail.png" alt="Cocktail" />
-      </div>
-      <div class="drink" data-type="shot">
-        <img src="assets/shot.png" alt="Shot" />
-      </div>
+      <div class="drink" data-type="beer"><img src="assets/beer.png" alt="Beer" /></div>
+      <div class="drink" data-type="cocktail"><img src="assets/cocktail.png" alt="Cocktail" /></div>
+      <div class="drink" data-type="shot"><img src="assets/shot.png" alt="Shot" /></div>
     </div>
     <div class="counter">
       <div>Drinks today: <span id="today">0</span></div>
@@ -105,6 +99,38 @@
       <button class="sheet-btn primary" id="create-btn">🎉 Create Session</button>
       <button class="sheet-btn secondary" id="join-btn">🔗 Join Session</button>
       <button class="sheet-btn cancel" id="cancel-btn">Cancel</button>
+    </div>
+  </div>
+
+  <!-- CREATE SESSION SHEET -->
+  <div id="create-sheet" class="sheet-overlay hidden">
+    <div class="sheet-card">
+      <div class="sheet-title">Create Session</div>
+      <input class="sheet-input" id="session-name-input" type="text" placeholder="Session name (e.g. Cancun 2025)" />
+      <input class="sheet-input" id="create-name-input" type="text" placeholder="Your name" />
+      <button class="sheet-btn primary" id="create-confirm">Create</button>
+      <button class="sheet-btn cancel" id="cancel-create">Cancel</button>
+    </div>
+  </div>
+
+  <!-- JOIN SESSION SHEET -->
+  <div id="join-sheet" class="sheet-overlay hidden">
+    <div class="sheet-card">
+      <div class="sheet-title">Join Session</div>
+      <input class="sheet-input" id="join-code-input" type="number" placeholder="Enter 4-digit code" maxlength="4" />
+      <input class="sheet-input" id="join-name-input" type="text" placeholder="Your name" />
+      <button class="sheet-btn primary" id="join-confirm">Join</button>
+      <button class="sheet-btn cancel" id="cancel-join">Cancel</button>
+    </div>
+  </div>
+
+  <!-- CODE DISPLAY SHEET -->
+  <div id="code-sheet" class="sheet-overlay hidden">
+    <div class="sheet-card">
+      <div class="sheet-title" id="display-session-name">Session</div>
+      <div class="code-label">Share this code with your group</div>
+      <div class="code-display" id="display-code">0000</div>
+      <button class="sheet-btn primary" id="code-done">Let's Go 🎉</button>
     </div>
   </div>
 
