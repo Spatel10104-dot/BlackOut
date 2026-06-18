@@ -13,6 +13,16 @@
 
   <!-- HOME SCREEN -->
   <div id="screen-home" class="screen">
+    <div class="home-header">
+      <div class="home-title">My Trips</div>
+      <button class="plus-btn" id="plus-btn">+</button>
+    </div>
+    <div class="trips-list" id="trips-list">
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">🌴</div>
+        <div class="empty-text">No trips yet.<br>Tap + to start a new session.</div>
+      </div>
+    </div>
   </div>
 
   <!-- BLACKOUT SCREEN -->
@@ -85,6 +95,16 @@
       <div class="title">BLACKOUT</div>
       <div class="text">Other person takes a shot</div>
       <button id="close">OK</button>
+    </div>
+  </div>
+
+  <!-- SESSION SHEET -->
+  <div id="session-sheet" class="sheet-overlay hidden">
+    <div class="sheet-card">
+      <div class="sheet-title">Start a Session</div>
+      <button class="sheet-btn primary" id="create-btn">🎉 Create Session</button>
+      <button class="sheet-btn secondary" id="join-btn">🔗 Join Session</button>
+      <button class="sheet-btn cancel" id="cancel-btn">Cancel</button>
     </div>
   </div>
 
