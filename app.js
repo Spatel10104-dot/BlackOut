@@ -270,6 +270,7 @@ async function openRecap(code) {
 
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.getElementById("screen-recap").classList.add("active");
+  loadRecapPhotos(code);
 }
 
 function showPlayerStats(playerData) {
@@ -452,4 +453,42 @@ if (currentSession && myName) {
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   document.getElementById("screen-blackout").classList.add("active");
   document.querySelector(".tab[data-screen='blackout']").classList.add("active");
+}
+
+// -------------------- PHOTO FEATURE --------------------
+const cameraBtn = document.getElementById("camera-btn");
+const photoInput = document.getElementById("photo-input");
+
+cameraBtn.addEventListener("click", () => photoInput.click());
+
+photoInput.addEventListener("change", () => {
+  const file = photoInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const photoData = e.target.result;
+    const sessionKey = currentSession ? currentSession.code : "solo";
+    const photos = JSON.parse(localStorage.getItem(`photos-${sessionKey}`)) || [];
+    photos.push({ data: photoData, timestamp: Date.now(), name: myName || "Me" });
+    localStorage.setItem(`photos-${sessionKey}`, JSON.stringify(photos));
+  };
+  reader.readAsDataURL(file);
+  photoInput.value = "";
+});
+
+function loadRecapPhotos(code) {
+  const grid = document.getElementById("recap-photos-grid");
+  const sessionKey = code || "solo";
+  const photos = JSON.parse(localStorage.getItem(`photos-${sessionKey}`)) || [];
+  if (photos.length === 0) {
+    grid.innerHTML = '<div class="photos-placeholder">📷 No photos yet</div>';
+    return;
+  }
+  grid.innerHTML = "";
+  photos.sort((a, b) => b.timestamp - a.timestamp).forEach(photo => {
+    const img = document.createElement("img");
+    img.src = photo.data;
+    img.className = "recap-photo";
+    grid.appendChild(img);
+  });
 }
