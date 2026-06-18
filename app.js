@@ -389,6 +389,7 @@ document.getElementById("create-confirm").addEventListener("click", async () => 
   document.getElementById("display-code").textContent = code;
   document.getElementById("display-session-name").textContent = sessionName;
   document.getElementById("code-sheet").classList.remove("hidden");
+  startNotificationListener();
 });
 
 document.getElementById("code-done").addEventListener("click", () => {
@@ -421,6 +422,7 @@ document.getElementById("join-confirm").addEventListener("click", async () => {
     today: { beer: 0, cocktail: 0, shot: 0 }
   });
   closeAllSheets();
+  startNotificationListener();
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   document.getElementById("screen-blackout").classList.add("active");
@@ -432,8 +434,9 @@ document.getElementById("cancel-join").addEventListener("click", closeAllSheets)
 
 // -------------------- INIT --------------------
 updateUI();
-if (currentSession && myName) {
-  // Listen for shot notifications directed at me
+
+function startNotificationListener() {
+  if (!currentSession || !myName) return;
   onValue(ref(db, `sessions/${currentSession.code}/notifications/${myName}`), (snapshot) => {
     if (!snapshot.exists()) return;
     const data = snapshot.val();
@@ -441,7 +444,10 @@ if (currentSession && myName) {
       showBasicModal(data.message);
     }
   });
+}
 
+if (currentSession && myName) {
+  startNotificationListener();
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   document.getElementById("screen-blackout").classList.add("active");
