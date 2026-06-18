@@ -147,3 +147,20 @@ document.getElementById("screen-blackout").classList.add("active");
 
 // Initial render
 updateUI();
+
+// -------------------- HOME SCREEN --------------------
+const plusBtn = document.getElementById("plus-btn");
+const sessionSheet = document.getElementById("session-sheet");
+const cancelBtn = document.getElementById("cancel-btn");
+
+plusBtn.addEventListener("click", () => {
+  sessionSheet.classList.remove("hidden");
+});
+
+cancelBtn.addEventListener("click", () => {
+  sessionSheet.classList.add("hidden");
+});
+
+sessionSheet.addEventListener("click", (e) => {
+  if (e.target === sessionSheet) sessionSheet.classList.add("hidden");
+});
