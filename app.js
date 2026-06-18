@@ -1,6 +1,6 @@
 // -------------------- FIREBASE SETUP --------------------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, onValue, update, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCFA74PQx7_hLUIaXKTx94883_NYPNXn48",
@@ -32,6 +32,7 @@ if (!state.today) state.today = { beer: 0, cocktail: 0, shot: 0 };
 
 let currentSession = JSON.parse(localStorage.getItem("blackout-session")) || null;
 let myName = localStorage.getItem("blackout-name") || null;
+let currentRecapCode = null;
 
 function save() { localStorage.setItem("blackout", JSON.stringify(state)); }
 function saveSession(s) { localStorage.setItem("blackout-session", JSON.stringify(s)); }
@@ -78,14 +79,13 @@ document.querySelectorAll(".drink").forEach(el => {
     const chance = BASE_CHANCE + tiers * TIER_ADD;
     if (Math.random() < chance) modal.classList.remove("hidden");
     updateUI(); save();
-    if (currentSession) syncDrinkToFirebase(type);
+    if (currentSession && myName) syncDrinkToFirebase();
   });
 });
 
 // -------------------- SYNC TO FIREBASE --------------------
-function syncDrinkToFirebase(type) {
-  const playerRef = ref(db, `sessions/${currentSession.code}/players/${myName}`);
-  update(playerRef, {
+function syncDrinkToFirebase() {
+  update(ref(db, `sessions/${currentSession.code}/players/${myName}`), {
     tripTotal: state.tripTotal,
     dayDrinks: state.dayDrinks,
     trip: state.trip,
@@ -114,6 +114,7 @@ closeBtn.onclick = () => modal.classList.add("hidden");
 document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", () => {
     const target = tab.dataset.screen;
+    if (target === "home") loadTrips();
     document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     document.getElementById("screen-" + target).classList.add("active");
@@ -121,26 +122,148 @@ document.querySelectorAll(".tab").forEach(tab => {
   });
 });
 
+// -------------------- HOME SCREEN - LOAD TRIPS --------------------
+async function loadTrips() {
+  const tripsList = document.getElementById("trips-list");
+  const emptyState = document.getElementById("empty-state");
+  const snapshot = await get(ref(db, "sessions"));
+  if (!snapshot.exists()) { emptyState.classList.remove("hidden"); return; }
+  const sessions = snapshot.val();
+  const myTrips = Object.values(sessions).filter(s => s.players && s.players[myName]);
+  if (myTrips.length === 0) { emptyState.classList.remove("hidden"); return; }
+  emptyState.classList.add("hidden");
+  tripsList.innerHTML = "";
+  myTrips.sort((a, b) => b.createdAt - a.createdAt).forEach(trip => {
+    const date = new Date(trip.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const card = document.createElement("div");
+    card.className = "trip-card";
+    card.innerHTML = `<div class="trip-name">${trip.name}</div><div class="trip-date">${date}</div>`;
+    card.addEventListener("click", () => openRecap(trip.code));
+    tripsList.appendChild(card);
+  });
+}
+
+// -------------------- RECAP SCREEN --------------------
+async function openRecap(code) {
+  currentRecapCode = code;
+  const snapshot = await get(ref(db, `sessions/${code}`));
+  if (!snapshot.exists()) return;
+  const session = snapshot.val();
+  const date = new Date(session.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const players = session.players || {};
+  const playerNames = Object.keys(players);
+
+  document.getElementById("recap-title").textContent = session.name;
+  document.getElementById("recap-meta").textContent = `${date} · ${playerNames.length} player${playerNames.length > 1 ? "s" : ""}`;
+
+  // Build player dropdown — my name first
+  const dropdown = document.getElementById("recap-player-dropdown");
+  const btn = document.getElementById("recap-player-btn-label");
+  dropdown.innerHTML = "";
+  const ordered = [myName, ...playerNames.filter(n => n !== myName)];
+  ordered.forEach((name, i) => {
+    const opt = document.createElement("div");
+    opt.className = "player-option" + (i === 0 ? " selected" : "");
+    opt.textContent = name + (i === 0 ? " ✓" : "");
+    opt.addEventListener("click", () => {
+      document.querySelectorAll(".player-option").forEach(o => { o.classList.remove("selected"); o.textContent = o.textContent.replace(" ✓", ""); });
+      opt.classList.add("selected");
+      opt.textContent = name + " ✓";
+      btn.textContent = name + "'s Drinks";
+      dropdown.classList.remove("show");
+      document.getElementById("recap-player-btn").classList.remove("open");
+      showPlayerStats(players[name]);
+    });
+    dropdown.appendChild(opt);
+  });
+
+  btn.textContent = (myName || playerNames[0]) + "'s Drinks";
+  showPlayerStats(players[myName] || players[playerNames[0]]);
+
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById("screen-recap").classList.add("active");
+}
+
+function showPlayerStats(playerData) {
+  if (!playerData) return;
+  const trip = playerData.trip || { beer: 0, cocktail: 0, shot: 0 };
+  document.getElementById("recap-beer").textContent = trip.beer || 0;
+  document.getElementById("recap-cocktail").textContent = trip.cocktail || 0;
+  document.getElementById("recap-shot").textContent = trip.shot || 0;
+  document.getElementById("recap-total").textContent = playerData.tripTotal || 0;
+}
+
+document.getElementById("recap-back").addEventListener("click", () => {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("screen-home").classList.add("active");
+  document.querySelector(".tab[data-screen='home']").classList.add("active");
+  loadTrips();
+});
+
+document.getElementById("recap-three-dot").addEventListener("click", () => {
+  document.getElementById("recap-dot-menu").classList.toggle("show");
+});
+
+document.getElementById("recap-delete").addEventListener("click", () => {
+  document.getElementById("recap-dot-menu").classList.remove("show");
+  document.getElementById("delete-confirm-modal").classList.remove("hidden");
+  document.getElementById("delete-trip-name").textContent = document.getElementById("recap-title").textContent;
+});
+
+document.getElementById("delete-cancel").addEventListener("click", () => {
+  document.getElementById("delete-confirm-modal").classList.add("hidden");
+});
+
+document.getElementById("delete-confirm").addEventListener("click", async () => {
+  await remove(ref(db, `sessions/${currentRecapCode}`));
+  document.getElementById("delete-confirm-modal").classList.add("hidden");
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("screen-home").classList.add("active");
+  document.querySelector(".tab[data-screen='home']").classList.add("active");
+  loadTrips();
+});
+
+document.getElementById("recap-player-btn").addEventListener("click", () => {
+  document.getElementById("recap-player-dropdown").classList.toggle("show");
+  document.getElementById("recap-player-btn").classList.toggle("open");
+});
+
+// -------------------- END NIGHT --------------------
+document.getElementById("end-night-btn").addEventListener("click", () => {
+  document.getElementById("end-night-modal").classList.remove("hidden");
+});
+
+document.getElementById("end-night-cancel").addEventListener("click", () => {
+  document.getElementById("end-night-modal").classList.add("hidden");
+});
+
+document.getElementById("end-night-confirm").addEventListener("click", () => {
+  currentSession = null;
+  localStorage.removeItem("blackout-session");
+  state = { tripTotal: 0, dayDrinks: 0, lastDay: todayKey(), trip: { beer: 0, cocktail: 0, shot: 0 }, today: { beer: 0, cocktail: 0, shot: 0 } };
+  save();
+  document.getElementById("end-night-modal").classList.add("hidden");
+  updateUI();
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("screen-home").classList.add("active");
+  document.querySelector(".tab[data-screen='home']").classList.add("active");
+  loadTrips();
+});
+
 // -------------------- SESSION SHEET --------------------
 const sessionSheet = document.getElementById("session-sheet");
-const plusBtn = document.getElementById("plus-btn");
-const cancelBtn = document.getElementById("cancel-btn");
-const createBtn = document.getElementById("create-btn");
-const joinBtn = document.getElementById("join-btn");
-
-plusBtn.addEventListener("click", () => sessionSheet.classList.remove("hidden"));
-cancelBtn.addEventListener("click", () => closeAllSheets());
+document.getElementById("plus-btn").addEventListener("click", () => sessionSheet.classList.remove("hidden"));
+document.getElementById("cancel-btn").addEventListener("click", closeAllSheets);
 sessionSheet.addEventListener("click", e => { if (e.target === sessionSheet) closeAllSheets(); });
 
 function closeAllSheets() {
-  sessionSheet.classList.add("hidden");
-  document.getElementById("create-sheet").classList.add("hidden");
-  document.getElementById("join-sheet").classList.add("hidden");
-  document.getElementById("code-sheet").classList.add("hidden");
+  ["session-sheet","create-sheet","join-sheet","code-sheet"].forEach(id => document.getElementById(id).classList.add("hidden"));
 }
 
-// -------------------- CREATE SESSION --------------------
-createBtn.addEventListener("click", () => {
+document.getElementById("create-btn").addEventListener("click", () => {
   sessionSheet.classList.add("hidden");
   document.getElementById("create-sheet").classList.remove("hidden");
 });
@@ -149,24 +272,15 @@ document.getElementById("create-confirm").addEventListener("click", async () => 
   const nameInput = document.getElementById("create-name-input").value.trim();
   const sessionName = document.getElementById("session-name-input").value.trim();
   if (!nameInput || !sessionName) { alert("Please fill in both fields"); return; }
-
   const code = Math.floor(1000 + Math.random() * 9000).toString();
   myName = nameInput;
   localStorage.setItem("blackout-name", myName);
-
-  const sessionData = {
-    name: sessionName,
-    code: code,
-    createdAt: Date.now(),
-    players: {
-      [myName]: { tripTotal: 0, dayDrinks: 0, trip: { beer: 0, cocktail: 0, shot: 0 }, today: { beer: 0, cocktail: 0, shot: 0 } }
-    }
-  };
-
-  await set(ref(db, `sessions/${code}`), sessionData);
+  await set(ref(db, `sessions/${code}`), {
+    name: sessionName, code, createdAt: Date.now(),
+    players: { [myName]: { tripTotal: 0, dayDrinks: 0, trip: { beer: 0, cocktail: 0, shot: 0 }, today: { beer: 0, cocktail: 0, shot: 0 } } }
+  });
   currentSession = { code, name: sessionName };
   saveSession(currentSession);
-
   document.getElementById("create-sheet").classList.add("hidden");
   document.getElementById("display-code").textContent = code;
   document.getElementById("display-session-name").textContent = sessionName;
@@ -174,15 +288,14 @@ document.getElementById("create-confirm").addEventListener("click", async () => 
 });
 
 document.getElementById("code-done").addEventListener("click", () => {
-  document.getElementById("code-sheet").classList.add("hidden");
+  closeAllSheets();
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   document.getElementById("screen-blackout").classList.add("active");
   document.querySelector(".tab[data-screen='blackout']").classList.add("active");
 });
 
-// -------------------- JOIN SESSION --------------------
-joinBtn.addEventListener("click", () => {
+document.getElementById("join-btn").addEventListener("click", () => {
   sessionSheet.classList.add("hidden");
   document.getElementById("join-sheet").classList.remove("hidden");
 });
@@ -191,24 +304,19 @@ document.getElementById("join-confirm").addEventListener("click", async () => {
   const code = document.getElementById("join-code-input").value.trim();
   const nameInput = document.getElementById("join-name-input").value.trim();
   if (!code || !nameInput) { alert("Please fill in both fields"); return; }
-
-  const sessionRef = ref(db, `sessions/${code}`);
-  const snapshot = await get(sessionRef);
+  const snapshot = await get(ref(db, `sessions/${code}`));
   if (!snapshot.exists()) { alert("Session not found. Check the code and try again."); return; }
-
   const sessionData = snapshot.val();
   myName = nameInput;
   localStorage.setItem("blackout-name", myName);
   currentSession = { code, name: sessionData.name };
   saveSession(currentSession);
-
   await set(ref(db, `sessions/${code}/players/${myName}`), {
     tripTotal: 0, dayDrinks: 0,
     trip: { beer: 0, cocktail: 0, shot: 0 },
     today: { beer: 0, cocktail: 0, shot: 0 }
   });
-
-  document.getElementById("join-sheet").classList.add("hidden");
+  closeAllSheets();
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   document.getElementById("screen-blackout").classList.add("active");
@@ -220,3 +328,9 @@ document.getElementById("cancel-join").addEventListener("click", closeAllSheets)
 
 // -------------------- INIT --------------------
 updateUI();
+if (currentSession) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("screen-blackout").classList.add("active");
+  document.querySelector(".tab[data-screen='blackout']").classList.add("active");
+}
