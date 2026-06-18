@@ -142,5 +142,8 @@ document.querySelectorAll(".tab").forEach(tab => {
   });
 });
 
+// Land on blackout tab by default
+document.getElementById("screen-blackout").classList.add("active");
+
 // Initial render
 updateUI();
