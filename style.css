@@ -155,6 +155,17 @@ body {
   color: #000;
 }
 
+.tab-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  opacity: 0.3;
+}
+
+.tab.active .tab-logo {
+  opacity: 1;
+}
+
 /* -------------------- MODAL -------------------- */
 .modal {
   position: fixed;
