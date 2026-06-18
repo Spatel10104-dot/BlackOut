@@ -77,7 +77,7 @@ document.querySelectorAll(".drink").forEach(el => {
     state.trip[type]++; state.today[type]++;
     const tiers = Math.floor(state.dayDrinks / TIER_DRINKS);
     const chance = BASE_CHANCE + tiers * TIER_ADD;
-    if (Math.random() < chance) modal.classList.remove("hidden");
+    if (Math.random() < chance) triggerShotModal();
     updateUI(); save();
     if (currentSession && myName) syncDrinkToFirebase();
   });
@@ -107,8 +107,80 @@ function updateUI() {
   document.getElementById("stat-trip-total").textContent = state.tripTotal;
 }
 
-// -------------------- MODAL --------------------
+// -------------------- SHOT MODAL --------------------
+async function triggerShotModal() {
+  if (!currentSession) {
+    // No session — show basic modal
+    showBasicModal("Other person takes a shot");
+    return;
+  }
+
+  const snapshot = await get(ref(db, `sessions/${currentSession.code}/players`));
+  if (!snapshot.exists()) { showBasicModal("Other person takes a shot"); return; }
+
+  const players = snapshot.val();
+  const others = Object.keys(players).filter(n => n !== myName);
+
+  if (others.length === 0) {
+    showBasicModal("Other person takes a shot");
+  } else if (others.length === 1) {
+    showBasicModal(`${others[0]} takes a shot! 🥃`);
+    notifyPlayer(others[0]);
+  } else {
+    showPickModal(others);
+  }
+}
+
+function showBasicModal(text) {
+  document.getElementById("modal-text").textContent = text;
+  document.getElementById("name-cards-container").classList.add("hidden");
+  document.getElementById("send-it-btn").classList.add("hidden");
+  document.getElementById("close").classList.remove("hidden");
+  modal.classList.remove("hidden");
+}
+
+function showPickModal(players) {
+  document.getElementById("modal-text").textContent = "Who takes the shot?";
+  document.getElementById("close").classList.add("hidden");
+  document.getElementById("send-it-btn").classList.remove("hidden");
+  document.getElementById("send-it-btn").classList.remove("ready");
+
+  const container = document.getElementById("name-cards-container");
+  container.innerHTML = "";
+  container.classList.remove("hidden");
+
+  players.forEach(name => {
+    const card = document.createElement("button");
+    card.className = "name-card";
+    card.textContent = name;
+    card.addEventListener("click", () => {
+      document.querySelectorAll(".name-card").forEach(c => c.classList.remove("selected"));
+      card.classList.add("selected");
+      document.getElementById("send-it-btn").classList.add("ready");
+      document.getElementById("modal-text").textContent = `${name} takes a shot! 🥃`;
+    });
+    container.appendChild(card);
+  });
+
+  modal.classList.remove("hidden");
+}
+
+function notifyPlayer(name) {
+  if (!currentSession) return;
+  update(ref(db, `sessions/${currentSession.code}/notifications/${name}`), {
+    message: `${myName} says you take a shot! 🥃`,
+    timestamp: Date.now()
+  });
+}
+
 closeBtn.onclick = () => modal.classList.add("hidden");
+
+document.getElementById("send-it-btn").addEventListener("click", () => {
+  const selected = document.querySelector(".name-card.selected");
+  if (!selected) return;
+  notifyPlayer(selected.textContent);
+  modal.classList.add("hidden");
+});
 
 // -------------------- TAB BAR --------------------
 document.querySelectorAll(".tab").forEach(tab => {
@@ -344,7 +416,16 @@ document.getElementById("cancel-join").addEventListener("click", closeAllSheets)
 
 // -------------------- INIT --------------------
 updateUI();
-if (currentSession) {
+if (currentSession && myName) {
+  // Listen for shot notifications directed at me
+  onValue(ref(db, `sessions/${currentSession.code}/notifications/${myName}`), (snapshot) => {
+    if (!snapshot.exists()) return;
+    const data = snapshot.val();
+    if (data && data.message && data.timestamp > Date.now() - 10000) {
+      showBasicModal(data.message);
+    }
+  });
+
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   document.getElementById("screen-blackout").classList.add("active");
