@@ -4,33 +4,75 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>BlackOut</title>
-
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" sizes="192x192" href="assets/icon-192.png">
   <link rel="apple-touch-icon" sizes="512x512" href="assets/icon-512.png">
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <div class="container">
-    <div class="drink" data-type="beer">
-      <img src="assets/beer.png" alt="Beer" />
-    </div>
 
-    <div class="drink" data-type="cocktail">
-      <img src="assets/cocktail.png" alt="Cocktail" />
+  <!-- HOME SCREEN -->
+  <div id="screen-home" class="screen active">
+    <div class="container">
+      <div class="drink" data-type="beer">
+        <img src="assets/beer.png" alt="Beer" />
+      </div>
+      <div class="drink" data-type="cocktail">
+        <img src="assets/cocktail.png" alt="Cocktail" />
+      </div>
+      <div class="drink" data-type="shot">
+        <img src="assets/shot.png" alt="Shot" />
+      </div>
     </div>
-
-    <div class="drink" data-type="shot">
-      <img src="assets/shot.png" alt="Shot" />
+    <div class="counter">
+      <div>Drinks today: <span id="today">0</span></div>
+      <div>Total drinks this trip: <span id="total">0</span></div>
     </div>
   </div>
 
- <div class="counter">
-  <div>Drinks today: <span id="today">0</span></div>
-  <div>Total drinks this trip: <span id="total">0</span></div>
-</div>
+  <!-- STATS SCREEN -->
+  <div id="screen-stats" class="screen">
+    <div class="stats-page">
+      <h2 class="stats-heading">Stats</h2>
 
+      <div class="stats-section">
+        <div class="stats-section-title">Today</div>
+        <div class="stats-row"><span>🍺 Beer</span><span id="stat-today-beer">0</span></div>
+        <div class="stats-row"><span>🍹 Cocktail</span><span id="stat-today-cocktail">0</span></div>
+        <div class="stats-row"><span>🥃 Shot</span><span id="stat-today-shot">0</span></div>
+        <div class="stats-row total-row"><span>Total</span><span id="stat-today-total">0</span></div>
+      </div>
+
+      <div class="stats-section">
+        <div class="stats-section-title">This Trip</div>
+        <div class="stats-row"><span>🍺 Beer</span><span id="stat-trip-beer">0</span></div>
+        <div class="stats-row"><span>🍹 Cocktail</span><span id="stat-trip-cocktail">0</span></div>
+        <div class="stats-row"><span>🥃 Shot</span><span id="stat-trip-shot">0</span></div>
+        <div class="stats-row total-row"><span>Total</span><span id="stat-trip-total">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <nav class="tab-bar">
+    <button class="tab active" data-screen="home">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      <span>Home</span>
+    </button>
+    <button class="tab" data-screen="stats">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10"/>
+        <line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6" y1="20" x2="6" y2="14"/>
+      </svg>
+      <span>Stats</span>
+    </button>
+  </nav>
+
+  <!-- SHOT MODAL -->
   <div id="modal" class="modal hidden">
     <div class="modal-card">
       <div class="emoji">🌴🥃</div>
@@ -43,5 +85,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-
-
