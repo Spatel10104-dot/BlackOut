@@ -12,7 +12,7 @@
 <body>
 
   <!-- HOME SCREEN -->
-  <div id="screen-home" class="screen">
+  <div id="screen-home" class="screen active">
     <div class="home-header">
       <div class="home-title">My Trips</div>
       <button class="plus-btn" id="plus-btn">+</button>
@@ -25,8 +25,44 @@
     </div>
   </div>
 
+  <!-- RECAP SCREEN -->
+  <div id="screen-recap" class="screen">
+    <div class="recap-header">
+      <button class="back-btn" id="recap-back">← My Trips</button>
+      <button class="three-dot-btn" id="recap-three-dot">···</button>
+    </div>
+    <div class="recap-title-section">
+      <div class="recap-title" id="recap-title"></div>
+      <div class="recap-meta" id="recap-meta"></div>
+    </div>
+    <div class="recap-scroll">
+      <div class="player-picker">
+        <button class="player-btn" id="recap-player-btn">
+          <span id="recap-player-btn-label">My Drinks</span>
+          <span class="chevron">▼</span>
+        </button>
+        <div class="player-dropdown" id="recap-player-dropdown"></div>
+      </div>
+      <div class="recap-section">
+        <div class="recap-section-title">Drinks</div>
+        <div class="recap-row"><span class="recap-label"><img src="assets/beer.png" class="recap-icon" alt="Beer"/>Beer</span><span id="recap-beer">0</span></div>
+        <div class="recap-row"><span class="recap-label"><img src="assets/cocktail.png" class="recap-icon" alt="Cocktail"/>Cocktail</span><span id="recap-cocktail">0</span></div>
+        <div class="recap-row"><span class="recap-label"><img src="assets/shot.png" class="recap-icon" alt="Shot"/>Shot</span><span id="recap-shot">0</span></div>
+        <div class="recap-row bold"><span>Total</span><span id="recap-total">0</span></div>
+      </div>
+      <div class="recap-section">
+        <div class="recap-section-title">Photos</div>
+        <div class="photos-placeholder">📷 Photos coming soon</div>
+      </div>
+    </div>
+    <div class="recap-dot-menu hidden" id="recap-dot-menu">
+      <div class="dot-menu-item danger" id="recap-delete">🗑 Delete Trip</div>
+      <div class="dot-menu-item" onclick="document.getElementById('recap-dot-menu').classList.add('hidden')">Cancel</div>
+    </div>
+  </div>
+
   <!-- BLACKOUT SCREEN -->
-  <div id="screen-blackout" class="screen active">
+  <div id="screen-blackout" class="screen">
     <div class="container">
       <div class="drink" data-type="beer"><img src="assets/beer.png" alt="Beer" /></div>
       <div class="drink" data-type="cocktail"><img src="assets/cocktail.png" alt="Cocktail" /></div>
@@ -56,19 +92,20 @@
         <div class="stats-row"><span class="stat-label"><img src="assets/shot.png" class="stat-icon" alt="Shot" /> Shot</span><span id="stat-trip-shot">0</span></div>
         <div class="stats-row total-row"><span>Total</span><span id="stat-trip-total">0</span></div>
       </div>
+      <button class="end-night-btn" id="end-night-btn">End Night</button>
     </div>
   </div>
 
   <!-- TAB BAR -->
   <nav class="tab-bar">
-    <button class="tab" data-screen="home">
+    <button class="tab active" data-screen="home">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
         <polyline points="9 22 9 12 15 12 15 22"/>
       </svg>
       <span>Home</span>
     </button>
-    <button class="tab active" data-screen="blackout">
+    <button class="tab" data-screen="blackout">
       <img src="assets/icon-192.png" class="tab-logo" alt="BlackOut" />
       <span>BlackOut</span>
     </button>
@@ -117,7 +154,7 @@
   <div id="join-sheet" class="sheet-overlay hidden">
     <div class="sheet-card">
       <div class="sheet-title">Join Session</div>
-      <input class="sheet-input" id="join-code-input" type="number" placeholder="Enter 4-digit code" maxlength="4" />
+      <input class="sheet-input" id="join-code-input" type="number" placeholder="Enter 4-digit code" />
       <input class="sheet-input" id="join-name-input" type="text" placeholder="Your name" />
       <button class="sheet-btn primary" id="join-confirm">Join</button>
       <button class="sheet-btn cancel" id="cancel-join">Cancel</button>
@@ -131,6 +168,28 @@
       <div class="code-label">Share this code with your group</div>
       <div class="code-display" id="display-code">0000</div>
       <button class="sheet-btn primary" id="code-done">Let's Go 🎉</button>
+    </div>
+  </div>
+
+  <!-- DELETE CONFIRM MODAL -->
+  <div id="delete-confirm-modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="emoji">🗑</div>
+      <div class="title">Delete Trip?</div>
+      <div class="text">Are you sure you want to delete "<span id="delete-trip-name"></span>"? This can't be undone.</div>
+      <button id="delete-confirm" style="background:#ff3b30;">Delete</button>
+      <button id="delete-cancel" style="background:#f2f2f2;color:#000;margin-top:8px;">Cancel</button>
+    </div>
+  </div>
+
+  <!-- END NIGHT MODAL -->
+  <div id="end-night-modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="emoji">🌙</div>
+      <div class="title">End Night?</div>
+      <div class="text">This will save your session and reset your drink counts.</div>
+      <button id="end-night-confirm">End Night</button>
+      <button id="end-night-cancel" style="background:#f2f2f2;color:#000;margin-top:8px;">Cancel</button>
     </div>
   </div>
 
