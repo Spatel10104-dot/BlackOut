@@ -1,6 +1,6 @@
 // -------------------- FIREBASE SETUP --------------------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, get, onValue, update, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCFA74PQx7_hLUIaXKTx94883_NYPNXn48",
@@ -16,32 +16,25 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
 
-// -------------------- ELEMENTS --------------------
-const totalEl = document.getElementById("total");
-const todayEl = document.getElementById("today");
-const modal = document.getElementById("modal");
-const closeBtn = document.getElementById("close");
-
+// -------------------- STATE --------------------
 const BASE_CHANCE = 0.05;
 const TIER_DRINKS = 4;
 const TIER_ADD = 0.075;
-
 const todayKey = () => new Date().toDateString();
 
 let state = JSON.parse(localStorage.getItem("blackout")) || {
-  tripTotal: 0,
-  dayDrinks: 0,
-  lastDay: todayKey(),
+  tripTotal: 0, dayDrinks: 0, lastDay: todayKey(),
   trip: { beer: 0, cocktail: 0, shot: 0 },
   today: { beer: 0, cocktail: 0, shot: 0 }
 };
-
 if (!state.trip) state.trip = { beer: 0, cocktail: 0, shot: 0 };
 if (!state.today) state.today = { beer: 0, cocktail: 0, shot: 0 };
 
-function save() {
-  localStorage.setItem("blackout", JSON.stringify(state));
-}
+let currentSession = JSON.parse(localStorage.getItem("blackout-session")) || null;
+let myName = localStorage.getItem("blackout-name") || null;
+
+function save() { localStorage.setItem("blackout", JSON.stringify(state)); }
+function saveSession(s) { localStorage.setItem("blackout-session", JSON.stringify(s)); }
 
 function resetIfNewDay() {
   if (state.lastDay !== todayKey()) {
@@ -51,33 +44,21 @@ function resetIfNewDay() {
   }
 }
 
-// -------------------- UNDO LOGIC --------------------
-let pressTimer = null;
-let longPressTriggered = false;
-let lastType = null;
+// -------------------- ELEMENTS --------------------
+const totalEl = document.getElementById("total");
+const todayEl = document.getElementById("today");
+const modal = document.getElementById("modal");
+const closeBtn = document.getElementById("close");
 
-function startPress() {
-  longPressTriggered = false;
-  pressTimer = setTimeout(() => {
-    undoLastDrink();
-    longPressTriggered = true;
-  }, 2000);
-}
-
-function endPress() {
-  clearTimeout(pressTimer);
-}
-
+// -------------------- UNDO --------------------
+let pressTimer = null, longPressTriggered = false, lastType = null;
+function startPress() { longPressTriggered = false; pressTimer = setTimeout(() => { undoLastDrink(); longPressTriggered = true; }, 2000); }
+function endPress() { clearTimeout(pressTimer); }
 function undoLastDrink() {
   if (state.tripTotal <= 0 || state.dayDrinks <= 0) return;
-  state.tripTotal--;
-  state.dayDrinks--;
-  if (lastType) {
-    if (state.trip[lastType] > 0) state.trip[lastType]--;
-    if (state.today[lastType] > 0) state.today[lastType]--;
-  }
-  updateUI();
-  save();
+  state.tripTotal--; state.dayDrinks--;
+  if (lastType) { if (state.trip[lastType] > 0) state.trip[lastType]--; if (state.today[lastType] > 0) state.today[lastType]--; }
+  updateUI(); save();
   if (navigator.vibrate) navigator.vibrate(20);
 }
 
@@ -87,41 +68,39 @@ document.querySelectorAll(".drink").forEach(el => {
   el.addEventListener("touchend", endPress);
   el.addEventListener("touchcancel", endPress);
   el.addEventListener("click", () => {
-    if (longPressTriggered) {
-      longPressTriggered = false;
-      return;
-    }
+    if (longPressTriggered) { longPressTriggered = false; return; }
     resetIfNewDay();
-
     const type = el.dataset.type;
     lastType = type;
-
-    state.tripTotal++;
-    state.dayDrinks++;
-    state.trip[type]++;
-    state.today[type]++;
-
+    state.tripTotal++; state.dayDrinks++;
+    state.trip[type]++; state.today[type]++;
     const tiers = Math.floor(state.dayDrinks / TIER_DRINKS);
     const chance = BASE_CHANCE + tiers * TIER_ADD;
-    if (Math.random() < chance) {
-      modal.classList.remove("hidden");
-    }
-
-    updateUI();
-    save();
+    if (Math.random() < chance) modal.classList.remove("hidden");
+    updateUI(); save();
+    if (currentSession) syncDrinkToFirebase(type);
   });
 });
+
+// -------------------- SYNC TO FIREBASE --------------------
+function syncDrinkToFirebase(type) {
+  const playerRef = ref(db, `sessions/${currentSession.code}/players/${myName}`);
+  update(playerRef, {
+    tripTotal: state.tripTotal,
+    dayDrinks: state.dayDrinks,
+    trip: state.trip,
+    today: state.today
+  });
+}
 
 // -------------------- UI --------------------
 function updateUI() {
   totalEl.textContent = state.tripTotal;
   todayEl.textContent = state.dayDrinks;
-
   document.getElementById("stat-today-beer").textContent = state.today.beer;
   document.getElementById("stat-today-cocktail").textContent = state.today.cocktail;
   document.getElementById("stat-today-shot").textContent = state.today.shot;
   document.getElementById("stat-today-total").textContent = state.dayDrinks;
-
   document.getElementById("stat-trip-beer").textContent = state.trip.beer;
   document.getElementById("stat-trip-cocktail").textContent = state.trip.cocktail;
   document.getElementById("stat-trip-shot").textContent = state.trip.shot;
@@ -142,25 +121,102 @@ document.querySelectorAll(".tab").forEach(tab => {
   });
 });
 
-// Land on blackout tab by default
-document.getElementById("screen-blackout").classList.add("active");
-
-// Initial render
-updateUI();
-
-// -------------------- HOME SCREEN --------------------
-const plusBtn = document.getElementById("plus-btn");
+// -------------------- SESSION SHEET --------------------
 const sessionSheet = document.getElementById("session-sheet");
+const plusBtn = document.getElementById("plus-btn");
 const cancelBtn = document.getElementById("cancel-btn");
+const createBtn = document.getElementById("create-btn");
+const joinBtn = document.getElementById("join-btn");
 
-plusBtn.addEventListener("click", () => {
-  sessionSheet.classList.remove("hidden");
-});
+plusBtn.addEventListener("click", () => sessionSheet.classList.remove("hidden"));
+cancelBtn.addEventListener("click", () => closeAllSheets());
+sessionSheet.addEventListener("click", e => { if (e.target === sessionSheet) closeAllSheets(); });
 
-cancelBtn.addEventListener("click", () => {
+function closeAllSheets() {
   sessionSheet.classList.add("hidden");
+  document.getElementById("create-sheet").classList.add("hidden");
+  document.getElementById("join-sheet").classList.add("hidden");
+  document.getElementById("code-sheet").classList.add("hidden");
+}
+
+// -------------------- CREATE SESSION --------------------
+createBtn.addEventListener("click", () => {
+  sessionSheet.classList.add("hidden");
+  document.getElementById("create-sheet").classList.remove("hidden");
 });
 
-sessionSheet.addEventListener("click", (e) => {
-  if (e.target === sessionSheet) sessionSheet.classList.add("hidden");
+document.getElementById("create-confirm").addEventListener("click", async () => {
+  const nameInput = document.getElementById("create-name-input").value.trim();
+  const sessionName = document.getElementById("session-name-input").value.trim();
+  if (!nameInput || !sessionName) { alert("Please fill in both fields"); return; }
+
+  const code = Math.floor(1000 + Math.random() * 9000).toString();
+  myName = nameInput;
+  localStorage.setItem("blackout-name", myName);
+
+  const sessionData = {
+    name: sessionName,
+    code: code,
+    createdAt: Date.now(),
+    players: {
+      [myName]: { tripTotal: 0, dayDrinks: 0, trip: { beer: 0, cocktail: 0, shot: 0 }, today: { beer: 0, cocktail: 0, shot: 0 } }
+    }
+  };
+
+  await set(ref(db, `sessions/${code}`), sessionData);
+  currentSession = { code, name: sessionName };
+  saveSession(currentSession);
+
+  document.getElementById("create-sheet").classList.add("hidden");
+  document.getElementById("display-code").textContent = code;
+  document.getElementById("display-session-name").textContent = sessionName;
+  document.getElementById("code-sheet").classList.remove("hidden");
 });
+
+document.getElementById("code-done").addEventListener("click", () => {
+  document.getElementById("code-sheet").classList.add("hidden");
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("screen-blackout").classList.add("active");
+  document.querySelector(".tab[data-screen='blackout']").classList.add("active");
+});
+
+// -------------------- JOIN SESSION --------------------
+joinBtn.addEventListener("click", () => {
+  sessionSheet.classList.add("hidden");
+  document.getElementById("join-sheet").classList.remove("hidden");
+});
+
+document.getElementById("join-confirm").addEventListener("click", async () => {
+  const code = document.getElementById("join-code-input").value.trim();
+  const nameInput = document.getElementById("join-name-input").value.trim();
+  if (!code || !nameInput) { alert("Please fill in both fields"); return; }
+
+  const sessionRef = ref(db, `sessions/${code}`);
+  const snapshot = await get(sessionRef);
+  if (!snapshot.exists()) { alert("Session not found. Check the code and try again."); return; }
+
+  const sessionData = snapshot.val();
+  myName = nameInput;
+  localStorage.setItem("blackout-name", myName);
+  currentSession = { code, name: sessionData.name };
+  saveSession(currentSession);
+
+  await set(ref(db, `sessions/${code}/players/${myName}`), {
+    tripTotal: 0, dayDrinks: 0,
+    trip: { beer: 0, cocktail: 0, shot: 0 },
+    today: { beer: 0, cocktail: 0, shot: 0 }
+  });
+
+  document.getElementById("join-sheet").classList.add("hidden");
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("screen-blackout").classList.add("active");
+  document.querySelector(".tab[data-screen='blackout']").classList.add("active");
+});
+
+document.getElementById("cancel-create").addEventListener("click", closeAllSheets);
+document.getElementById("cancel-join").addEventListener("click", closeAllSheets);
+
+// -------------------- INIT --------------------
+updateUI();
