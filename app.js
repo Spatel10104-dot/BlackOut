@@ -105,6 +105,22 @@ function updateUI() {
   document.getElementById("stat-trip-cocktail").textContent = state.trip.cocktail;
   document.getElementById("stat-trip-shot").textContent = state.trip.shot;
   document.getElementById("stat-trip-total").textContent = state.tripTotal;
+
+  // Stats heading — show trip name if in session
+  const statsHeading = document.getElementById("stats-heading");
+  if (currentSession && currentSession.name) {
+    statsHeading.textContent = currentSession.name;
+  } else {
+    statsHeading.textContent = "Stats";
+  }
+
+  // End Night button — only show if in session or drinks logged
+  const endNightBtn = document.getElementById("end-night-btn");
+  if (currentSession || state.tripTotal > 0) {
+    endNightBtn.classList.remove("hidden");
+  } else {
+    endNightBtn.classList.add("hidden");
+  }
 }
 
 // -------------------- SHOT MODAL --------------------
