@@ -202,11 +202,15 @@ document.getElementById("recap-back").addEventListener("click", () => {
 });
 
 document.getElementById("recap-three-dot").addEventListener("click", () => {
-  document.getElementById("recap-dot-menu").classList.toggle("show");
+  document.getElementById("recap-dot-menu").classList.toggle("hidden");
+});
+
+document.getElementById("recap-dot-cancel").addEventListener("click", () => {
+  document.getElementById("recap-dot-menu").classList.add("hidden");
 });
 
 document.getElementById("recap-delete").addEventListener("click", () => {
-  document.getElementById("recap-dot-menu").classList.remove("show");
+  document.getElementById("recap-dot-menu").classList.add("hidden");
   document.getElementById("delete-confirm-modal").classList.remove("hidden");
   document.getElementById("delete-trip-name").textContent = document.getElementById("recap-title").textContent;
 });
@@ -239,7 +243,19 @@ document.getElementById("end-night-cancel").addEventListener("click", () => {
   document.getElementById("end-night-modal").classList.add("hidden");
 });
 
-document.getElementById("end-night-confirm").addEventListener("click", () => {
+document.getElementById("end-night-confirm").addEventListener("click", async () => {
+  // Save final stats to Firebase before resetting
+  if (currentSession && myName) {
+    await update(ref(db, `sessions/${currentSession.code}/players/${myName}`), {
+      tripTotal: state.tripTotal,
+      dayDrinks: state.dayDrinks,
+      trip: state.trip,
+      today: state.today,
+      endedAt: Date.now()
+    });
+  }
+
+  // Reset only this user's local state
   currentSession = null;
   localStorage.removeItem("blackout-session");
   state = { tripTotal: 0, dayDrinks: 0, lastDay: todayKey(), trip: { beer: 0, cocktail: 0, shot: 0 }, today: { beer: 0, cocktail: 0, shot: 0 } };
