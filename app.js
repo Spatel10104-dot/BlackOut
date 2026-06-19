@@ -52,24 +52,25 @@ const modal = document.getElementById("modal");
 const closeBtn = document.getElementById("close");
 
 // -------------------- UNDO --------------------
-let pressTimer = null, longPressTriggered = false, lastType = null;
-function startPress() { longPressTriggered = false; pressTimer = setTimeout(() => { undoLastDrink(); longPressTriggered = true; }, 2000); }
-function endPress() { clearTimeout(pressTimer); }
+let lastType = null;
+
 function undoLastDrink() {
   if (state.tripTotal <= 0 || state.dayDrinks <= 0) return;
   state.tripTotal--; state.dayDrinks--;
-  if (lastType) { if (state.trip[lastType] > 0) state.trip[lastType]--; if (state.today[lastType] > 0) state.today[lastType]--; }
+  if (lastType) {
+    if (state.trip[lastType] > 0) state.trip[lastType]--;
+    if (state.today[lastType] > 0) state.today[lastType]--;
+  }
   updateUI(); save();
-  if (navigator.vibrate) navigator.vibrate(20);
+  if (currentSession && myName) syncDrinkToFirebase();
+  if (navigator.vibrate) navigator.vibrate([20, 50, 20]);
 }
+
+document.getElementById("undo-btn").addEventListener("click", undoLastDrink);
 
 // -------------------- LOG DRINK --------------------
 document.querySelectorAll(".drink").forEach(el => {
-  el.addEventListener("touchstart", startPress);
-  el.addEventListener("touchend", endPress);
-  el.addEventListener("touchcancel", endPress);
   el.addEventListener("click", () => {
-    if (longPressTriggered) { longPressTriggered = false; return; }
     resetIfNewDay();
     const type = el.dataset.type;
     lastType = type;
@@ -148,6 +149,7 @@ async function triggerShotModal() {
 }
 
 function showBasicModal(text) {
+  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
   document.getElementById("modal-text").textContent = text;
   document.getElementById("name-cards-container").classList.add("hidden");
   document.getElementById("send-it-btn").classList.add("hidden");
@@ -156,6 +158,7 @@ function showBasicModal(text) {
 }
 
 function showPickModal(players) {
+  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
   document.getElementById("modal-text").textContent = "Who takes the shot?";
   document.getElementById("close").classList.add("hidden");
   document.getElementById("send-it-btn").classList.remove("hidden");
