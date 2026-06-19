@@ -557,3 +557,18 @@ button {
   object-fit: cover;
   border-radius: 10px;
 }
+
+/* -------------------- UNDO BUTTON -------------------- */
+.undo-btn {
+  position: absolute;
+  left: 14px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px;
+  margin: 0;
+  width: auto;
+  border-radius: 8px;
+  color: #444;
+}
